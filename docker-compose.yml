@@ -1,67 +1,29 @@
 services:
   mysql:
-    image: mysql:8.0
     container_name: books_mysql
-    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: attractions_db
+      MYSQL_PASSWORD: attractions_pass
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: attractions_user
       TZ: Asia/Bangkok
+    image: mysql:8.0
+    networks:
+      stack: null
     ports:
-      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 3306
+        published: "3307"  # Change the published port to 3307
+    restart: unless-stopped
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks: [stack]
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    restart: unless-stopped
-    environment:
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      UPLOAD_LIMIT: 256M
-    ports:
-      - "${PHPMYADMIN_PORT:-8888}:80"
-    depends_on: [mysql]
-    networks: [stack]
-
-  api:
-    build: ./01_api
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      PORT: ${API_PORT}
-      DB_HOST: mysql
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${MYSQL_DATABASE}
-      DB_USER: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
-      TZ: Asia/Bangkok
-    ports:
-      - "${API_PORT:-3001}:3001"
-    depends_on: [mysql]
-    networks: [stack]
-
-  frontend:
-    build:
-      context: ./02_frontend
-      args:
-        - API_HOST=${API_HOST:-http://localhost:3001}
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    depends_on: [api]
-    networks: [stack]
-
-volumes:
-  mysql_data:
-
-networks:
-  stack:
-    driver: bridge
-
+      - type: volume
+        source: mysql_data
+        target: /var/lib/mysql
+        volume: {}
+      - type: bind
+        source: /var/lib/jenkins/workspace/Final_dit312/init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
+        read_only: true
+        bind:
+          create_host_path: true
