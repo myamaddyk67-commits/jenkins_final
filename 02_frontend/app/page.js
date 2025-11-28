@@ -44,7 +44,7 @@ export default function Page() {
   return (
     <main className="container">
       <header className="header">
-        <h1 className="title">Books</h1>
+        <h1 className="title">Online Books Store</h1>
         <p className="subtitle">Explore a collection of books</p>
       </header>
 
